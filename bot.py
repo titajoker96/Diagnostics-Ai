@@ -1,18 +1,17 @@
 import os
 import logging
-from dotenv import load_dotenv
+import asyncio
+import nest_asyncio
 from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
-import cohere
+from g4f.client import Client
 
-load_dotenv()
+nest_asyncio.apply()
 
-# قراءة التوكن والمفتاح
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8612719931:AAG5aqhKDq9P-Zy5dnOHVxLdNICPtMi0C2U")
-COHERE_API_KEY = os.getenv("COHERE_API_KEY", "wUjjTEg7l6j9x28jK2q6KKRAbDX0eSvRNyF4Y4vp2STfyN")
 
-# تهيئة عميل Cohere
-co = cohere.ClientV2(api_key=COHERE_API_KEY)
+# عميل مجاني مباشر بدون أي API Key
+client = Client()
 
 SYSTEM_PROMPT = """
 أنت مهندس ومساعد فني لتشخيص أعطال معدات Kalmar Reachstacker DRG 420-450 ومحركات Cummins QSM11.
@@ -43,15 +42,20 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
     
     try:
-        response = co.chat(
-            model="command-r-plus",
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": user_query}
-            ]
+        # تشغيل الطلب في Thread منفصل لعدم تجميد البوت
+        loop = asyncio.get_event_loop()
+        response = await loop.run_in_executor(
+            None,
+            lambda: client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": user_query}
+                ]
+            )
         )
-        response_text = response.message.content[0].text
-        await update.message.reply_text(response_text, parse_mode="Markdown")
+        response_text = response.choices[0].message.content
+        await update.message.reply_text(response_text)
     except Exception as e:
         await update.message.reply_text(f"حدث خطأ أثناء معالجة الطلب: {str(e)}")
 
@@ -60,5 +64,6 @@ if __name__ == '__main__':
     app.add_handler(CommandHandler('start', start))
     app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
     
-    print("البوت يعمل الآن بنجاح باستخدام Cohere...")
+    print("البوت يعمل الآن ومستعد للاستخدام...")
     app.run_polling()
+    
