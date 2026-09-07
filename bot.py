@@ -9,7 +9,7 @@ load_dotenv()
 
 # قراءة المتغيرات من Railway
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8612719931:AAG5aqhKDq9P-Zy5dnOHVxLdNICPtMi0C2U")
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "Gsk_eD6elWUwrlykfHeBQL0fWGdyb3FYTbVv0wXNfRyH7zwLGIF8iUXx")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "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")
 
 # تهيئة عميل Groq
 client = Groq(api_key=GROQ_API_KEY)
