@@ -9,7 +9,8 @@ load_dotenv()
 
 # قراءة التوكن والمفتاح
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8612719931:AAG5aqhKDq9P-Zy5dnOHVxLdNICPtMi0C2U")
-COHERE_API_KEY = os.getenv("COHERE_API_KEY", "Cohere_wUjjTEg7l6j9x28jK2q6KKRAbDX0eSvRNyF4Y4vp2STfyN")
+COHERE_API_KEY = os.getenv("COHERE_API_KEY", "C
+wUjjTEg7l6j9x28jK2q6KKRAbDX0eSvRNyF4Y4vp2STfyN")
 
 # تهيئة عميل Cohere
 co = cohere.ClientV2(api_key=COHERE_API_KEY)
