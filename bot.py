@@ -10,7 +10,6 @@ nest_asyncio.apply()
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8612719931:AAG5aqhKDq9P-Zy5dnOHVxLdNICPtMi0C2U")
 
-# عميل مجاني مباشر بدون أي API Key
 client = Client()
 
 SYSTEM_PROMPT = """
@@ -42,7 +41,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
     
     try:
-        # تشغيل الطلب في Thread منفصل لعدم تجميد البوت
         loop = asyncio.get_event_loop()
         response = await loop.run_in_executor(
             None,
