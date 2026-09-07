@@ -45,7 +45,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         response = await loop.run_in_executor(
             None,
             lambda: client.chat.completions.create(
-                model="gpt-4o-mini",
+                model="",
+                provider="Blackbox",
                 messages=[
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user", "content": user_query}
@@ -54,8 +55,24 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         response_text = response.choices[0].message.content
         await update.message.reply_text(response_text)
-    except Exception as e:
-        await update.message.reply_text(f"حدث خطأ أثناء معالجة الطلب: {str(e)}")
+    except Exception:
+        try:
+            loop = asyncio.get_event_loop()
+            response = await loop.run_in_executor(
+                None,
+                lambda: client.chat.completions.create(
+                    model="gpt-4o",
+                    provider="PollinationsAI",
+                    messages=[
+                        {"role": "system", "content": SYSTEM_PROMPT},
+                        {"role": "user", "content": user_query}
+                    ]
+                )
+            )
+            response_text = response.choices[0].message.content
+            await update.message.reply_text(response_text)
+        except Exception as err:
+            await update.message.reply_text(f"حدث خطأ أثناء معالجة الطلب: {str(err)}")
 
 if __name__ == '__main__':
     app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
