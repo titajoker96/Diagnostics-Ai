@@ -1,7 +1,5 @@
 import os
 import logging
-import threading
-from http.server import HTTPServer, BaseHTTPRequestHandler
 from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
@@ -9,23 +7,11 @@ from groq import Groq
 
 load_dotenv()
 
-# قراءة التوكن والمفتاح
+# قراءة المتغيرات من Railway
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8612719931:AAG5aqhKDq9P-Zy5dnOHVxLdNICPtMi0C2U")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "Gsk_eD6elWUwrlykfHeBQL0fWGdyb3FYTbVv0wXNfRyH7zwLGIF8iUXx")
 
-# خادم ويب داخلي لتشغيل البوت مجاناً على منصة Render
-class HealthCheckHandler(BaseHTTPRequestHandler):
-    def do_GET(self):
-        self.send_response(200)
-        self.end_headers()
-        self.wfile.write(b"Kalmar Bot is Running!")
-
-def run_health_server():
-    port = int(os.environ.get("PORT", 8080))
-    server = HTTPServer(("0.0.0.0", port), HealthCheckHandler)
-    server.serve_forever()
-
-# إعداد عميل Groq
+# تهيئة عميل Groq
 client = Groq(api_key=GROQ_API_KEY)
 
 SYSTEM_PROMPT = """
@@ -71,47 +57,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"حدث خطأ أثناء معالجة الطلب: {str(e)}")
 
 if __name__ == '__main__':
-    # تشغيل السيرفر الشكلي لتلبية متطلبات Render
-    threading.Thread(target=run_health_server, daemon=True).start()
-    
-    # تشغيل بوت التيليجرام
     app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
     app.add_handler(CommandHandler('start', start))
     app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
     
-    print("البوت يعمل الآن بنجاح باستخدام Groq ومستعد للاستخدام...")
+    print("البوت يعمل الآن على Railway بنجاح...")
     app.run_polling()
-# إعداد التسجيل لمتابعة العمليات والأخطاء
-logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
-)
-
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    welcome_text = (
-        "مرحباً بك في مساعد تشخيص أعطال Kalmar & Cummins - by Mostafa M 🛠️\n\n"
-        "أرسل رقم الكود (مثلاً: 6006 أو 7681) أو اكتب المشكلة مباشرة "
-        "(مثلاً: بلف الفرد مش شغال أو التويست لوك لا يقفل) وسأعطيك أرقام الفيش والأطراف وخطوات القياس."
-    )
-    await update.message.reply_text(welcome_text)
-
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_query = update.message.text
-    # إظهار حالة "يكتب الآن..." في التيليجرام
-    await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
     
-    try:
-        response = chat_session.send_message(user_query)
-        await update.message.reply_text(response.text, parse_mode="Markdown")
-    except Exception as e:
-        await update.message.reply_text(f"حدث خطأ أثناء معالجة الطلب: {str(e)}")
-
-if __name__ == '__main__':
-    app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
-    
-    app.add_handler(CommandHandler('start', start))
-    app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
-    
-    print("البوت يعمل الآن ومستعد لاستقبال الرسائل...")
-    app.run_polling()
-  
