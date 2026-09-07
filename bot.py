@@ -3,16 +3,18 @@ import logging
 from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
-from groq import Groq
+from openai import OpenAI
 
 load_dotenv()
 
-# قراءة المتغيرات
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8612719931:AAG5aqhKDq9P-Zy5dnOHVxLdNICPtMi0C2U")
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "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")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
 
-# تهيئة عميل Groq
-client = Groq(api_key=GROQ_API_KEY)
+# تهيئة عميل OpenRouter (متوافق مع مكتبة OpenAI الرسمية)
+client = OpenAI(
+    base_url="https://openrouter.ai/api/v1",
+    api_key=OPENROUTER_API_KEY,
+)
 
 SYSTEM_PROMPT = """
 أنت مهندس ومساعد فني لتشخيص أعطال معدات Kalmar Reachstacker DRG 420-450 ومحركات Cummins QSM11.
@@ -43,15 +45,15 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
     
     try:
-        chat_completion = client.chat.completions.create(
+        response = client.chat.completions.create(
+            model="openrouter/free",  # يختار تلقائياً أفضل موديل مجاني متاح دون توقف
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": user_query}
             ],
-            model="gemma2-9b-it",
             temperature=0.2,
         )
-        response_text = chat_completion.choices[0].message.content
+        response_text = response.choices[0].message.content
         await update.message.reply_text(response_text, parse_mode="Markdown")
     except Exception as e:
         await update.message.reply_text(f"حدث خطأ أثناء معالجة الطلب: {str(e)}")
@@ -61,6 +63,5 @@ if __name__ == '__main__':
     app.add_handler(CommandHandler('start', start))
     app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
     
-    print("البوت يعمل الآن على Railway بنجاح...")
+    print("البوت يعمل الآن على OpenRouter ومستعد للاستخدام...")
     app.run_polling()
-    
