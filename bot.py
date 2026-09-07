@@ -3,18 +3,16 @@ import logging
 from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
-from openai import OpenAI
+import cohere
 
 load_dotenv()
 
+# قراءة التوكن والمفتاح
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8612719931:AAG5aqhKDq9P-Zy5dnOHVxLdNICPtMi0C2U")
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "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")
+COHERE_API_KEY = os.getenv("COHERE_API_KEY", "Cohere_wUjjTEg7l6j9x28jK2q6KKRAbDX0eSvRNyF4Y4vp2STfyN")
 
-# تهيئة عميل OpenRouter
-client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=OPENROUTER_API_KEY,
-)
+# تهيئة عميل Cohere
+co = cohere.ClientV2(api_key=COHERE_API_KEY)
 
 SYSTEM_PROMPT = """
 أنت مهندس ومساعد فني لتشخيص أعطال معدات Kalmar Reachstacker DRG 420-450 ومحركات Cummins QSM11.
@@ -45,15 +43,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
     
     try:
-        response = client.chat.completions.create(
-            model="openrouter/free",
+        response = co.chat(
+            model="command-r-plus",
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": user_query}
-            ],
-            temperature=0.2,
+            ]
         )
-        response_text = response.choices[0].message.content
+        response_text = response.message.content[0].text
         await update.message.reply_text(response_text, parse_mode="Markdown")
     except Exception as e:
         await update.message.reply_text(f"حدث خطأ أثناء معالجة الطلب: {str(e)}")
@@ -63,6 +60,5 @@ if __name__ == '__main__':
     app.add_handler(CommandHandler('start', start))
     app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
     
-    print("البوت يعمل الآن بنجاح على OpenRouter...")
+    print("البوت يعمل الآن بنجاح باستخدام Cohere...")
     app.run_polling()
-    
