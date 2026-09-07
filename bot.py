@@ -8,9 +8,9 @@ from openai import OpenAI
 load_dotenv()
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8612719931:AAG5aqhKDq9P-Zy5dnOHVxLdNICPtMi0C2U")
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "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")
 
-# تهيئة عميل OpenRouter (متوافق مع مكتبة OpenAI الرسمية)
+# عميل OpenRouter الرسمي
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key=OPENROUTER_API_KEY,
@@ -45,8 +45,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
     
     try:
+        # بنستخدم موديل مجاني ممتاز وسريع جداً على OpenRouter
         response = client.chat.completions.create(
-            model="openrouter/free",  # يختار تلقائياً أفضل موديل مجاني متاح دون توقف
+            model="meta-llama/llama-3.3-70b-instruct:free",
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": user_query}
@@ -63,5 +64,6 @@ if __name__ == '__main__':
     app.add_handler(CommandHandler('start', start))
     app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
     
-    print("البوت يعمل الآن على OpenRouter ومستعد للاستخدام...")
+    print("البوت يعمل الآن بنجاح على OpenRouter...")
     app.run_polling()
+    
