@@ -1,2 +1,1 @@
 python-telegram-bot>=20.0
-duckduckgo_search>=6.0.0
